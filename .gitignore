@@ -1,0 +1,11 @@
+/uploads/*
+/assets/uploads/*
+*.log
+*.tmp
+*.bak
+*.old
+*.OLD
+.DS_Store
+Thumbs.db
+.env
+config.local.php
