@@ -2,17 +2,17 @@
 
 Professional ULD Inventory Management System for MADAPT / Ethiopian Airlines.
 
-## Current recovery
+## Sprint 1 — recovery build
 
-This repository is being reconstructed from the working ULDs application snapshot from 5–6 August 2026 and the later Portals update.
+This repository contains the recovered PHP application for Hostinger.
 
 ### Target deployment
 
-- Hostinger path: `public_html/uldspro`
+- Hostinger web root: `public_html`
 - Database: `u619448402_uldspro`
 - Default branch: `main`
 
-## Sprint 1 recovered components
+### Included
 
 - Login and session authentication
 - ULD stock dashboard
@@ -22,23 +22,33 @@ This repository is being reconstructed from the working ULDs application snapsho
 - User approval and role management
 - Settings
 - Low-stock alert configuration
-- Flight management (ET740 / ET741)
+- Flight management
 - Portals
-- Initial audit-log database structure
+- Audit log structure
 
-## Installation
+## Database
 
-1. Create the database `u619448402_uldspro` in Hostinger.
-2. Import `database/install.sql` with phpMyAdmin.
-3. Set the real database password in `config.php` (do not commit the password).
-4. Deploy the project to `public_html/uldspro`.
-5. Log in with the initial administrator account and immediately change the password.
+Import `database/install.sql` once into `u619448402_uldspro` with phpMyAdmin.
+
+## Hostinger configuration
+
+The application never stores the real MySQL password in GitHub. Create `config.local.php` in `public_html` on the server, or provide the four `MADAPT_DB_*` environment variables through the hosting configuration.
+
+Example `config.local.php`:
+
+```php
+<?php
+define('MADAPT_DB_HOST', 'localhost');
+define('MADAPT_DB_NAME', 'u619448402_uldspro');
+define('MADAPT_DB_USER', 'YOUR_DATABASE_USER');
+define('MADAPT_DB_PASS', 'YOUR_DATABASE_PASSWORD');
+```
+
+Do not commit that file.
 
 Initial administrator:
 
 - Username: `admin`
 - Temporary password: `ChangeMe123!`
 
-## Important
-
-The database password must never be committed to GitHub. Keep it in the Hostinger deployment configuration or in an ignored local configuration file.
+Change the administrator password immediately after first login.
