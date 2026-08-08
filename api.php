@@ -105,7 +105,11 @@ try {
             : "SELECT id,movement_type,uld_type,quantity,reference,remarks,NULL AS flight_number,user_name,created_at FROM uld_movements ORDER BY id DESC LIMIT 500";
         $movements = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         $low = array_values(array_filter($stock, static fn($row) => (int)$row['current_stock'] <= (int)$row['minimum_level']));
-        J(['ok' => true, 'stock' => $stock, 'low_stock' => $low, 'movements' => $movements]);
+        $flights = [];
+        try {
+            $flights = $pdo->query("SELECT id,flight_number,active FROM madapt_flights WHERE active=1 ORDER BY flight_number ASC")->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Throwable $e) {}
+        J(['ok' => true, 'stock' => $stock, 'low_stock' => $low, 'movements' => $movements, 'flights' => $flights]);
     }
 
     if ($action === 'history') {
