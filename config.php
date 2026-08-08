@@ -46,28 +46,66 @@ function setup_page(Throwable $e): never { http_response_code(503); echo '<!doct
 function login_required(): void { if (empty($_SESSION['user'])) out(['ok'=>false,'error'=>'Login required'],401); }
 function admin_required(): void { login_required(); if (strtoupper((string)($_SESSION['user']['role']??''))!=='ADMIN') out(['ok'=>false,'error'=>'Administrator access required'],403); }
 
-/* The current SPA is index.php and uses its own layout. Inject the mobile controls
-   here so the existing application markup stays untouched. Never buffer api.php. */
+/* The current SPA is index.php. Inject the mobile controls, editable footer and
+   the animated aircraft without changing the existing application markup. */
 if (basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) === 'index.php') {
     ob_start(static function (string $html): string {
         if (stripos($html, '</body>') === false || stripos($html, 'id="madapt-mobilebar"') !== false) return $html;
         $user = $_SESSION['user'] ?? [];
         $name = e((string)($user['full_name'] ?? $user['username'] ?? ''));
-        $footer = '<footer id="madapt-footer" class="madapt-footer"><div class="footer-brand"><strong>MADAPT ULDs</strong><span>Inventory Management System</span></div><div class="footer-meta"><span>Ethiopian Airlines · MADAPT ULDs</span><span>© '.date('Y').' MADAPT ULDs</span><span>Secure operational inventory</span></div></footer>';
+        $s=[];
+        try { foreach (db()->query('SELECT setting_key,setting_value FROM madapt_settings')->fetchAll(PDO::FETCH_ASSOC) as $r) $s[$r['setting_key']]=$r['setting_value']; } catch (Throwable $e) {}
+        $contactName = e((string)($s['footer_contact_name'] ?? 'Tarekegne Asnake'));
+        $contactEmail = e((string)($s['footer_contact_email'] ?? 'tarekegnea@airlinesairmat.com'));
+        $contactPhone = e((string)($s['footer_contact_phone'] ?? '+34622510121'));
+        $footerText = e((string)($s['footer_text'] ?? 'Secure operational inventory'));
+        $aircraft = trim((string)($s['aircraft_path'] ?? ''));
+        $aircraftHtml = $aircraft ? '<div class="header-aircraft" aria-hidden="true"><img src="'.e($aircraft).'" alt=""></div>' : '<div class="header-aircraft header-aircraft-placeholder" aria-hidden="true"></div>';
+        $footer = '<footer id="madapt-footer" class="madapt-footer"><div class="footer-brand"><strong>MADAPT ULDs</strong><span>Inventory Management System</span></div><div class="footer-contact"><strong>Contacto</strong><span>'. $contactName .'</span><a href="mailto:'. $contactEmail .'">'. $contactEmail .'</a><a href="tel:'. preg_replace('/[^0-9+]/','',$contactPhone) .'">'. $contactPhone .'</a></div><div class="footer-meta"><span>Ethiopian Airlines · MADAPT ULDs</span><span>© '.date('Y').' MADAPT ULDs</span><span>'. $footerText .'</span></div></footer>';
         $mobile = '<div id="madapt-mobilebar" class="madapt-mobilebar"><button id="madapt-menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">☰</button><strong>MADAPT ULDs</strong><span>'. $name .'</span></div>';
         $script = <<<'JS'
 <script>
 (function(){
   const side=document.getElementById('sidebar'), toggle=document.getElementById('madapt-menu-toggle');
-  if(!side||!toggle)return;
-  function close(){side.classList.remove('open');toggle.setAttribute('aria-expanded','false');}
-  toggle.addEventListener('click',function(){const open=side.classList.toggle('open');toggle.setAttribute('aria-expanded',open?'true':'false');});
-  side.addEventListener('click',function(e){if(e.target.closest('[data-page]'))close();});
-  document.addEventListener('click',function(e){if(window.innerWidth<=700 && side.classList.contains('open') && !side.contains(e.target) && !toggle.contains(e.target))close();});
-  window.addEventListener('resize',function(){if(window.innerWidth>700)close();});
+  if(side&&toggle){
+    function close(){side.classList.remove('open');toggle.setAttribute('aria-expanded','false');}
+    toggle.addEventListener('click',function(){const open=side.classList.toggle('open');toggle.setAttribute('aria-expanded',open?'true':'false');});
+    side.addEventListener('click',function(e){if(e.target.closest('[data-page]'))close();});
+    document.addEventListener('click',function(e){if(window.innerWidth<=700&&side.classList.contains('open')&&!side.contains(e.target)&&!toggle.contains(e.target))close();});
+    window.addEventListener('resize',function(){if(window.innerWidth>700)close();});
+  }
+  const sf=document.getElementById('sf');
+  if(sf&&!sf.querySelector('[name="footer_contact_name"]')){
+    const wrap=document.createElement('div');
+    wrap.className='settings-footer-fields';
+    wrap.innerHTML='<hr><h3>Footer & Contact</h3><p class="muted">These details appear in the application footer on PC and mobile.</p><input name="footer_contact_name" placeholder="Contact name"><input name="footer_contact_email" type="email" placeholder="Contact email"><input name="footer_contact_phone" placeholder="Contact phone"><input name="footer_text" placeholder="Footer text">';
+    sf.appendChild(wrap);
+  }
+  const observer=new MutationObserver(function(){
+    const form=document.getElementById('sf');
+    if(form&&!form.querySelector('[name="footer_contact_name"]')){
+      const wrap=document.createElement('div');wrap.className='settings-footer-fields';
+      wrap.innerHTML='<hr><h3>Footer & Contact</h3><p class="muted">These details appear in the application footer on PC and mobile.</p><input name="footer_contact_name" placeholder="Contact name"><input name="footer_contact_email" type="email" placeholder="Contact email"><input name="footer_contact_phone" placeholder="Contact phone"><input name="footer_text" placeholder="Footer text">';form.appendChild(wrap);
+    }
+  });
+  observer.observe(document.body,{childList:true,subtree:true});
+  setTimeout(function(){
+    const form=document.getElementById('sf');
+    if(form){
+      const values={contact_name:'',contact_email:'',contact_phone:'',text:''};
+      const footer=document.getElementById('madapt-footer');
+      if(footer){const c=footer.querySelector('.footer-contact');if(c){const spans=c.querySelectorAll('span,a');values.contact_name=spans[0]?.textContent||'';values.contact_email=spans[1]?.textContent||'';values.contact_phone=spans[2]?.textContent||'';}const meta=footer.querySelector('.footer-meta span:last-child');values.text=meta?.textContent||'';}
+      form.querySelector('[name="footer_contact_name"]').value=values.contact_name;
+      form.querySelector('[name="footer_contact_email"]').value=values.contact_email;
+      form.querySelector('[name="footer_contact_phone"]').value=values.contact_phone;
+      form.querySelector('[name="footer_text"]').value=values.text;
+    }
+  },80);
 })();
 </script>
 JS;
-        return str_ireplace('</body>', $mobile.$footer.$script.'</body>', $html);
+        if (stripos($html, '</header>') !== false) $html = str_ireplace('</header>', $aircraftHtml.'</header>', $html);
+        if (stripos($html, '</main>') !== false) $html = str_ireplace('</main>', $footer.'</main>', $html);
+        return str_ireplace('</body>', $mobile.$script.'</body>', $html);
     });
 }
