@@ -47,7 +47,7 @@ function login_required(): void { if (empty($_SESSION['user'])) out(['ok'=>false
 function admin_required(): void { login_required(); if (strtoupper((string)($_SESSION['user']['role']??''))!=='ADMIN') out(['ok'=>false,'error'=>'Administrator access required'],403); }
 
 /* The current SPA is index.php. Inject the mobile controls, editable footer and
-   the animated aircraft without changing the existing application markup. */
+   animated aircraft while keeping the existing application markup untouched. */
 if (basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) === 'index.php') {
     ob_start(static function (string $html): string {
         if (stripos($html, '</body>') === false || stripos($html, 'id="madapt-mobilebar"') !== false) return $html;
@@ -63,6 +63,7 @@ if (basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) === 'index.php') {
         $aircraftHtml = $aircraft ? '<div class="header-aircraft" aria-hidden="true"><img src="'.e($aircraft).'" alt=""></div>' : '<div class="header-aircraft header-aircraft-placeholder" aria-hidden="true"></div>';
         $footer = '<footer id="madapt-footer" class="madapt-footer"><div class="footer-brand"><strong>MADAPT ULDs</strong><span>Inventory Management System</span></div><div class="footer-contact"><strong>Contacto</strong><span>'. $contactName .'</span><a href="mailto:'. $contactEmail .'">'. $contactEmail .'</a><a href="tel:'. preg_replace('/[^0-9+]/','',$contactPhone) .'">'. $contactPhone .'</a></div><div class="footer-meta"><span>Ethiopian Airlines · MADAPT ULDs</span><span>© '.date('Y').' MADAPT ULDs</span><span>'. $footerText .'</span></div></footer>';
         $mobile = '<div id="madapt-mobilebar" class="madapt-mobilebar"><button id="madapt-menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">☰</button><strong>MADAPT ULDs</strong><span>'. $name .'</span></div>';
+        $style = '<style id="madapt-shell-style">.header-aircraft{position:relative;flex:1;min-width:120px;height:72px;margin:0 28px;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}.header-aircraft img{display:block;max-width:min(320px,70%);max-height:62px;width:auto;height:auto;object-fit:contain;animation:madaptAircraftFly 10s linear infinite}.header-aircraft-placeholder{min-width:0}.madapt-footer{background:#fff;border-top:1px solid #dfe9e5;padding:16px 30px;display:grid;grid-template-columns:minmax(220px,1fr) auto minmax(300px,1.3fr);align-items:center;gap:24px;color:#5f746c;font-size:12px;line-height:1.45;flex:0 0 auto}.footer-brand{display:flex;align-items:center;gap:12px;min-width:0}.footer-brand strong{color:var(--primary);font-size:14px}.footer-brand span{padding-left:12px;border-left:1px solid #d6e1dc}.footer-contact{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}.footer-contact strong{color:var(--primary)}.footer-contact a{color:#486a5c;text-decoration:none}.footer-contact a:hover{text-decoration:underline}.footer-meta{display:flex;gap:18px;flex-wrap:wrap;justify-content:flex-end;text-align:right}.footer-meta span+span{border-left:1px solid #d6e1dc;padding-left:18px}.settings-footer-fields{width:100%;flex-basis:100%;display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:10px;padding-top:8px}.settings-footer-fields hr{grid-column:1/-1;width:100%;border:0;border-top:1px solid #e2ebe7}.settings-footer-fields h3,.settings-footer-fields p{grid-column:1/-1;margin:0}.settings-footer-fields input{width:100%;min-width:0}.settings-footer-fields input:last-child{grid-column:1/-1}@keyframes madaptAircraftFly{0%{transform:translateX(-125%)}45%{transform:translateX(0)}55%{transform:translateX(0)}100%{transform:translateX(125%)}}@media(max-width:700px){.header-aircraft{display:none}.madapt-footer{display:block;padding:18px 15px;text-align:center}.footer-brand{justify-content:center;flex-wrap:wrap}.footer-brand span{border:0;padding:0}.footer-contact{margin-top:10px;justify-content:center}.footer-meta{justify-content:center;margin-top:10px;gap:8px;text-align:center}.footer-meta span{display:block}.footer-meta span+span{border-left:0;padding-left:0}.footer-meta span+span:before{content:"·";padding:0 7px;color:#b0beb9}.settings-footer-fields{grid-template-columns:1fr}.settings-footer-fields input:last-child{grid-column:auto}}@media(min-width:701px){.madapt-mobilebar{display:none!important}}@media(prefers-reduced-motion:reduce){.header-aircraft img{animation:none!important}} </style>';
         $script = <<<'JS'
 <script>
 (function(){
@@ -74,37 +75,27 @@ if (basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) === 'index.php') {
     document.addEventListener('click',function(e){if(window.innerWidth<=700&&side.classList.contains('open')&&!side.contains(e.target)&&!toggle.contains(e.target))close();});
     window.addEventListener('resize',function(){if(window.innerWidth>700)close();});
   }
-  const sf=document.getElementById('sf');
-  if(sf&&!sf.querySelector('[name="footer_contact_name"]')){
-    const wrap=document.createElement('div');
-    wrap.className='settings-footer-fields';
+  function addFooterFields(){
+    const form=document.getElementById('sf');
+    if(!form||form.querySelector('[name="footer_contact_name"]'))return;
+    const wrap=document.createElement('div');wrap.className='settings-footer-fields';
     wrap.innerHTML='<hr><h3>Footer & Contact</h3><p class="muted">These details appear in the application footer on PC and mobile.</p><input name="footer_contact_name" placeholder="Contact name"><input name="footer_contact_email" type="email" placeholder="Contact email"><input name="footer_contact_phone" placeholder="Contact phone"><input name="footer_text" placeholder="Footer text">';
-    sf.appendChild(wrap);
+    form.appendChild(wrap);
+    const footer=document.getElementById('madapt-footer');
+    const c=footer?.querySelector('.footer-contact');
+    const spans=c?.querySelectorAll('span,a')||[];
+    wrap.querySelector('[name="footer_contact_name"]').value=spans[0]?.textContent?.trim()||'Tarekegne Asnake';
+    wrap.querySelector('[name="footer_contact_email"]').value=spans[1]?.textContent?.trim()||'tarekegnea@airlinesairmat.com';
+    wrap.querySelector('[name="footer_contact_phone"]').value=spans[2]?.textContent?.trim()||'+34622510121';
+    wrap.querySelector('[name="footer_text"]').value=footer?.querySelector('.footer-meta span:last-child')?.textContent?.trim()||'Secure operational inventory';
   }
-  const observer=new MutationObserver(function(){
-    const form=document.getElementById('sf');
-    if(form&&!form.querySelector('[name="footer_contact_name"]')){
-      const wrap=document.createElement('div');wrap.className='settings-footer-fields';
-      wrap.innerHTML='<hr><h3>Footer & Contact</h3><p class="muted">These details appear in the application footer on PC and mobile.</p><input name="footer_contact_name" placeholder="Contact name"><input name="footer_contact_email" type="email" placeholder="Contact email"><input name="footer_contact_phone" placeholder="Contact phone"><input name="footer_text" placeholder="Footer text">';form.appendChild(wrap);
-    }
-  });
-  observer.observe(document.body,{childList:true,subtree:true});
-  setTimeout(function(){
-    const form=document.getElementById('sf');
-    if(form){
-      const values={contact_name:'',contact_email:'',contact_phone:'',text:''};
-      const footer=document.getElementById('madapt-footer');
-      if(footer){const c=footer.querySelector('.footer-contact');if(c){const spans=c.querySelectorAll('span,a');values.contact_name=spans[0]?.textContent||'';values.contact_email=spans[1]?.textContent||'';values.contact_phone=spans[2]?.textContent||'';}const meta=footer.querySelector('.footer-meta span:last-child');values.text=meta?.textContent||'';}
-      form.querySelector('[name="footer_contact_name"]').value=values.contact_name;
-      form.querySelector('[name="footer_contact_email"]').value=values.contact_email;
-      form.querySelector('[name="footer_contact_phone"]').value=values.contact_phone;
-      form.querySelector('[name="footer_text"]').value=values.text;
-    }
-  },80);
+  const observer=new MutationObserver(addFooterFields);observer.observe(document.body,{childList:true,subtree:true});addFooterFields();
 })();
 </script>
 JS;
-        if (stripos($html, '</header>') !== false) $html = str_ireplace('</header>', $aircraftHtml.'</header>', $html);
+        if (stripos($html, '</head>') !== false) $html = str_ireplace('</head>', $style.'</head>', $html);
+        if (stripos($html, '<button class="profile-btn"') !== false) $html = str_ireplace('<button class="profile-btn"', $aircraftHtml.'<button class="profile-btn"', $html);
+        elseif (stripos($html, '</header>') !== false) $html = str_ireplace('</header>', $aircraftHtml.'</header>', $html);
         if (stripos($html, '</main>') !== false) $html = str_ireplace('</main>', $footer.'</main>', $html);
         return str_ireplace('</body>', $mobile.$script.'</body>', $html);
     });
