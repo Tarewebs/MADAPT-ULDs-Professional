@@ -45,3 +45,29 @@ function setup_page(Throwable $e): never { http_response_code(503); echo '<!doct
 
 function login_required(): void { if (empty($_SESSION['user'])) out(['ok'=>false,'error'=>'Login required'],401); }
 function admin_required(): void { login_required(); if (strtoupper((string)($_SESSION['user']['role']??''))!=='ADMIN') out(['ok'=>false,'error'=>'Administrator access required'],403); }
+
+/* The current SPA is index.php and uses its own layout. Inject the mobile controls
+   here so the existing application markup stays untouched. Never buffer api.php. */
+if (basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) === 'index.php') {
+    ob_start(static function (string $html): string {
+        if (stripos($html, '</body>') === false || stripos($html, 'id="madapt-mobilebar"') !== false) return $html;
+        $user = $_SESSION['user'] ?? [];
+        $name = e((string)($user['full_name'] ?? $user['username'] ?? ''));
+        $footer = '<footer id="madapt-footer" class="madapt-footer"><div class="footer-brand"><strong>MADAPT ULDs</strong><span>Inventory Management System</span></div><div class="footer-meta"><span>Ethiopian Airlines · MADAPT ULDs</span><span>© '.date('Y').' MADAPT ULDs</span><span>Secure operational inventory</span></div></footer>';
+        $mobile = '<div id="madapt-mobilebar" class="madapt-mobilebar"><button id="madapt-menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">☰</button><strong>MADAPT ULDs</strong><span>'. $name .'</span></div>';
+        $script = <<<'JS'
+<script>
+(function(){
+  const side=document.getElementById('sidebar'), toggle=document.getElementById('madapt-menu-toggle');
+  if(!side||!toggle)return;
+  function close(){side.classList.remove('open');toggle.setAttribute('aria-expanded','false');}
+  toggle.addEventListener('click',function(){const open=side.classList.toggle('open');toggle.setAttribute('aria-expanded',open?'true':'false');});
+  side.addEventListener('click',function(e){if(e.target.closest('[data-page]'))close();});
+  document.addEventListener('click',function(e){if(window.innerWidth<=700 && side.classList.contains('open') && !side.contains(e.target) && !toggle.contains(e.target))close();});
+  window.addEventListener('resize',function(){if(window.innerWidth>700)close();});
+})();
+</script>
+JS;
+        return str_ireplace('</body>', $mobile.$footer.$script.'</body>', $html);
+    });
+}
