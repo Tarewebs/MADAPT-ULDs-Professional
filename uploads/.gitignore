@@ -1,0 +1,3 @@
+# Keep runtime-uploaded images out of Git.
+*
+!.gitignore
