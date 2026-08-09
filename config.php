@@ -8,6 +8,12 @@ define('DB_HOST', defined('MADAPT_DB_HOST') ? MADAPT_DB_HOST : (getenv('MADAPT_D
 define('DB_NAME', defined('MADAPT_DB_NAME') ? MADAPT_DB_NAME : (getenv('MADAPT_DB_NAME') ?: 'u619448402_uldspro'));
 define('DB_USER', defined('MADAPT_DB_USER') ? MADAPT_DB_USER : (getenv('MADAPT_DB_USER') ?: ''));
 define('DB_PASS', defined('MADAPT_DB_PASS') ? MADAPT_DB_PASS : (getenv('MADAPT_DB_PASS') ?: ''));
+define('MADAPT_SMTP_HOST', defined('MADAPT_SMTP_HOST') ? MADAPT_SMTP_HOST : (getenv('MADAPT_SMTP_HOST') ?: 'smtp.hostinger.com'));
+define('MADAPT_SMTP_PORT', defined('MADAPT_SMTP_PORT') ? MADAPT_SMTP_PORT : (getenv('MADAPT_SMTP_PORT') ?: 465));
+define('MADAPT_SMTP_USER', defined('MADAPT_SMTP_USER') ? MADAPT_SMTP_USER : (getenv('MADAPT_SMTP_USER') ?: 'ulds@madapt.es'));
+define('MADAPT_SMTP_PASS', defined('MADAPT_SMTP_PASS') ? MADAPT_SMTP_PASS : (getenv('MADAPT_SMTP_PASS') ?: ''));
+define('MADAPT_SMTP_FROM', defined('MADAPT_SMTP_FROM') ? MADAPT_SMTP_FROM : (getenv('MADAPT_SMTP_FROM') ?: 'ulds@madapt.es'));
+define('MADAPT_SMTP_FROM_NAME', defined('MADAPT_SMTP_FROM_NAME') ? MADAPT_SMTP_FROM_NAME : (getenv('MADAPT_SMTP_FROM_NAME') ?: 'MADAPT ULDs'));
 define('APP_NAME', 'MADAPT ULDs Professional');
 define('APP_VERSION', '2.0.0');
 date_default_timezone_set('Europe/Madrid');
