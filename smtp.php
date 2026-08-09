@@ -21,8 +21,8 @@ function madapt_smtp_send(string $to, string $subject, string $body): void {
     }
 
     $timeout = 20;
-    $remote = $port === 465 ? 'ssl://' . $host : $host;
-    $fp = @stream_socket_client('tcp://' . $remote . ':' . $port, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT);
+    $transport = $port === 465 ? 'ssl://' . $host . ':' . $port : 'tcp://' . $host . ':' . $port;
+    $fp = @stream_socket_client($transport, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT);
     if (!$fp) throw new RuntimeException('SMTP connection failed.');
     stream_set_timeout($fp, $timeout);
 
