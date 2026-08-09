@@ -2,6 +2,7 @@
 declare(strict_types=1);
 session_start();
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/smtp.php';
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 
@@ -23,18 +24,23 @@ try {
 
     $subject = 'MADAPT ULDs - LOW STOCK TEST ALERT';
     $message = "Dear Team,\n\nThis is a TEST alert from MADAPT ULDs Inventory Management.\n\nThe Low Stock alert email system has been triggered successfully.\n\nThis message does not change inventory or create a movement.\n\nKind regards,\nMADAPT ULDs Inventory Management";
-    $from = trim((string)$pdo->query("SELECT setting_value FROM madapt_settings WHERE setting_key='footer_contact_email' LIMIT 1")->fetchColumn());
-    if (!filter_var($from, FILTER_VALIDATE_EMAIL)) $from = 'noreply@airlinesairmat.com';
-    $headers = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nFrom: MADAPT ULDs <".$from.">\r\nReply-To: ".$from."\r\n";
-
     $results=[];
     foreach ($recipients as $email) {
-        $sent = @mail((string)$email, $subject, $message, $headers);
-        $results[]=['email'=>$email,'accepted_by_server'=>(bool)$sent];
+        try {
+            madapt_smtp_send((string)$email, $subject, $message);
+            $results[]=['email'=>(string)$email,'accepted_by_server'=>true];
+        } catch (Throwable $e) {
+            error_log('MADAPT SMTP TEST ERROR for '.(string)$email.': '.$e->getMessage());
+            $results[]=['email'=>(string)$email,'accepted_by_server'=>false];
+        }
     }
     $accepted = count(array_filter($results, static fn($r)=>(bool)$r['accepted_by_server']));
-    alert_json(['ok'=>$accepted>0,'message'=>$accepted.' of '.count($results).' message(s) accepted by the server. Delivery depends on Hostinger mail configuration.','results'=>$results]);
+    alert_json([
+        'ok'=>$accepted>0,
+        'message'=>$accepted.' of '.count($results).' message(s) accepted by SMTP server. Delivery depends on recipient mail filtering.',
+        'results'=>$results
+    ]);
 } catch (Throwable $e) {
     error_log('MADAPT ALERT TEST ERROR: '.$e->getMessage());
-    alert_json(['ok'=>false,'error'=>'Could not send test alert.'],500);
+    alert_json(['ok'=>false,'error'=>'Could not send test alert. Check SMTP configuration.'],500);
 }
