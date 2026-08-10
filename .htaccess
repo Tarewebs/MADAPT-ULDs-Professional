@@ -1,1 +1,3 @@
 DirectoryIndex index-wrapper.php index.php
+RewriteEngine On
+RewriteRule ^index\.php$ index-wrapper.php [L]
