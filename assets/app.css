@@ -31,3 +31,6 @@ form{display:flex;gap:12px;flex-wrap:wrap;align-items:center}form input,form sel
 /* Header cleanup: one aircraft only; controls stay at the extreme right before profile. */
 @media(min-width:701px){header>div:first-child::after{right:12px;transform:translateY(-50%);animation:headerPlane 7s linear infinite}.header-actions{margin-left:auto}.header-actions .ui-tools{order:1}.header-actions .profile-btn{order:2}.header-actions .ui-tools::before,.header-actions .ui-tools::after{content:none!important;display:none!important;background:none!important}.header-actions .ui-tool{box-shadow:none!important}.header-actions{gap:10px}}
 @keyframes headerPlane{0%{right:calc(100% - 150px)}45%{right:48%}100%{right:12px}}
+/* Final aircraft cleanup: one larger aircraft, no duplicate in the right controls area. */
+@media(min-width:701px){header>div:first-child::after{width:132px;height:70px}.header-actions img,.header-actions picture,.header-actions [class*="aircraft"],[class*="aircraft"]{display:none!important}.header-actions::before,.header-actions::after{content:none!important;display:none!important}}
+@media(max-width:700px){.madapt-mobilebar [class*="aircraft"],.madapt-mobilebar img[src*="aircraft"],.madapt-mobilebar picture{display:none!important}}
