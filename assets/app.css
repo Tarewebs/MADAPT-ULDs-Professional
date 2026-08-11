@@ -35,4 +35,4 @@ form{display:flex;gap:12px;flex-wrap:wrap;align-items:center}form input,form sel
 @media(min-width:701px){header>div:first-child::after{width:132px;height:70px}.header-actions img,.header-actions picture,.header-actions [class*="aircraft"],[class*="aircraft"]{display:none!important}.header-actions::before,.header-actions::after{content:none!important;display:none!important}}
 @media(max-width:700px){.madapt-mobilebar [class*="aircraft"],.madapt-mobilebar img[src*="aircraft"],.madapt-mobilebar picture{display:none!important}}
 /* Mobile menu visual auto-close fallback: tapping a nav item focuses it, so the open drawer hides immediately. */
-@media(max-width:700px){#sidebar.open:has(nav button[data-page]:focus){left:-290px}#sidebar.open:has(nav button#logoutBtn:focus){left:-290px}}
+@media(max-width:700px){#sidebar.open:has(nav button[data-page]:focus){left:-290px}#sidebar.open:has(nav button#logoutBtn:focus){left:-290px}body:has(#sidebar.open) main:active~#sidebar{left:-290px}body:has(#sidebar.open) #sidebar:has(+main:active){left:-290px}}
